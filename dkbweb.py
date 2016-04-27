@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 class DkbScraper(dkb.DkbScraper):
     LOGOUTURL = "https://banking.dkb.de/dkb/-?$part=DkbTransactionBanking.infobar.logout-button&$event=logout"
-    
+
     def bank_account_transactions_overview(self):
         """
         Navigates the internal browser state to the bank account
@@ -131,7 +131,7 @@ class DkbScraper(dkb.DkbScraper):
             # find right bank account...
             for label in item.get_labels():
                 ls = label.text.split("/") # I don't know if it's better to extract the bank account number using regex
-                if len(ls) > 2 and ls[1].strip().split()[-1] == baid:
+                if len(ls) > 2 and re.sub("\D", "", ls[1].strip())[-len(baid):] == baid:
                     form.set_value([item.name], name=ba_list.name, type="select")
                     return
 
@@ -162,7 +162,7 @@ class DkbScraper(dkb.DkbScraper):
         Performs the logout process so that the session is closed on the DKB server.
         """
         self.br.open(self.LOGOUTURL)
-        
+
 
 
 if __name__ == '__main__':
