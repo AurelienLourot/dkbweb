@@ -1,4 +1,5 @@
 # dkbweb
+This is a for of https://code.google.com/archive/p/dkbweb/
 
 Fetches bank account and credit card transactions from the web interface of the German DKB bank.
 
