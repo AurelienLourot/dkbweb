@@ -244,6 +244,27 @@ if __name__ == '__main__':
         f.write(csv_text)
     else:
         dkb2qif = dkb.DkbConverter(csv_text, cc_name=args.qif_account)
+
+        # Length of the pre-amble (non-CSV headers), including the
+        # CSV head line
+        dkb2qif.SKIP_LINES = 7
+
+        # Column Definitions: Which values can be found in which columns?
+
+        # see: <https://bazaar.launchpad.net/~mdoyen/homebank/5.1.x/view/head:/src/hb-import-qif.c>
+        # and dkb.py
+        dkb2qif.COL_DATE = 0  # Buchungstag
+        dkb2qif.COL_PAYEE = 3   # Begünstigter # included as optional
+        dkb2qif.COL_VALUTA_DATE = 1  # Wertstellung
+        dkb2qif.COL_DESC = 4 # COL_DESC = Memo1 Verwendungszweck
+        dkb2qif.COL_VALUE = 7 # Betrag
+        dkb2qif.COL_TEXT = 2 # continue, if this field (Buchungstext) has the value "Abschluss" (Girokonto)
+        #dkb2qif.COL_INFO = 4 # COL_INFO = Memo2 Verwendungszweck (?) # included as optional
+
+        # Number of fields for the line to be recognized as a valid
+        # transaction line:
+        dkb2qif.REQUIRED_FIELDS = 5
+
         dkb2qif.export_to(args.output)
 
     fetcher.logout()
