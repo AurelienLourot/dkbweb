@@ -42,18 +42,11 @@ class DkbScraper(dkb.DkbScraper):
         transaction overview menu
         """
         logger.info("Navigating to 'Kontoumsätze'...")
-        br = self.br
-        overview_html = BeautifulSoup(br.response().read())
-        for link in br.links():
-            if re.search("Kontoums.*tze", link.text, re.I):
-                br.follow_link(link)
-                return
-            if 'weitergeleitet' in link.text:
-                br.follow_link(link)
-            if link.text == 'here':
-                br.follow_link(text="here")
-        raise RuntimeError("Unable to find link 'Kontoumsätze' -- "
-            "Maybe the login went wrong?")
+        try:
+            return self.br.follow_link(url_regex='banking/finanzstatus/kontoumsaetze')
+        except Exception:
+            raise RuntimeError('Unable to find link Umsätze -- '
+                               'Maybe the login went wrong?')
 
     def _get_transaction_selection_form_ba(self):
         """
@@ -63,7 +56,7 @@ class DkbScraper(dkb.DkbScraper):
         """
         for form in self.br.forms():
             try:
-                form.find_control(name="slBankAccount", type="select")
+                form.find_control(name="slAllAccounts")
                 return form
             except Exception:
                 continue
@@ -123,20 +116,19 @@ class DkbScraper(dkb.DkbScraper):
         @param str baid: full bank account number
         """
         try:
-            ba_list = form.find_control("slBankAccount", type="select")
+            ba_list = form.find_control("slAllAccounts", type="select")
         except Exception:
             raise RuntimeError("Unable to find bank account selection form")
 
         for item in ba_list.get_items():
             # find right bank account...
             for label in item.get_labels():
-                ls = label.text.split("/") # I don't know if it's better to extract the bank account number using regex
-                if len(ls) > 2 and re.sub("\D", "", ls[1].strip())[-len(baid):] == baid:
-                    form.set_value([item.name], name=ba_list.name, type="select")
+                bapattern = r'\b[A-Z]{2}\d{16}%s\b' % re.escape(baid)
+                if re.search(bapattern, label.text, re.I):
+                    form[ba_list.name] = [item.name]
                     return
 
         raise RuntimeError("Unable to find the right bank account")
-
 
     def select_transactions_ba(self, baid, from_date, to_date):
         """
