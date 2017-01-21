@@ -1,4 +1,7 @@
 #!/usr/bin/env python2.7
+
+# this is not a real test, it is only used to test the regular expressions
+
 import re
 
 cardid = "0000"
