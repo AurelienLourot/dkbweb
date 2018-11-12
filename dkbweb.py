@@ -56,7 +56,7 @@ class DkbScraper(dkb.DkbScraper):
         """
         for form in self.br.forms():
             try:
-                form.find_control(name="slAllAccounts")
+                form.find_control(name="slAllAccounts", type='select')
                 return form
             except Exception:
                 continue
@@ -113,7 +113,7 @@ class DkbScraper(dkb.DkbScraper):
         transaction selection form.
 
         @param mechanize.HTMLForm form
-        @param str baid: full bank account number
+        @param str baid: last 4 digits of IBAN
         """
         try:
             ba_list = form.find_control("slAllAccounts", type="select")
@@ -123,9 +123,11 @@ class DkbScraper(dkb.DkbScraper):
         for item in ba_list.get_items():
             # find right bank account...
             for label in item.get_labels():
-                bapattern = r'\b[A-Z]{2}\d{16}%s\b' % re.escape(baid)
+                # Trying to match lines that look like
+                # DE01 2345 6789 0123 4567 89 / GirokontoDE01 2345 6789 0123 4567 89 / Girokonto
+                bapattern = r'\b[A-Z]{2}[\d\s]{20}%s\s%s\b' % (re.escape(baid[:2]), re.escape(baid[2:]))
                 if re.search(bapattern, label.text, re.I):
-                    form[ba_list.name] = [item.name]
+                    form.value = [item.name]
                     return
 
         raise RuntimeError("Unable to find the right bank account")
@@ -136,7 +138,7 @@ class DkbScraper(dkb.DkbScraper):
         from_date and to_date for the bank account identified by the
         given full bank account number.
 
-        @param str baid: full bank account number
+        @param str baid: last 4 digits of IBAN
         @param str from_date dd.mm.YYYY
         @param str to_date dd.mm.YYYY
         """
@@ -174,7 +176,7 @@ if __name__ == '__main__':
     cli.add_argument("--pin",
         help="Your user PIN (same as used for login). Use with care!")
     cli.add_argument("--baid",
-        help="Full bank account number")
+        help="Last 4 digits of your IBAN")
     cli.add_argument("--cardid",
         help="Last 4 digits of your card number")
     cli.add_argument("--output", "-o",
@@ -278,7 +280,7 @@ Testing:
 
 2. With dkbweb.py you can also query your bank account transactions:
 
-./dkbweb.py --userid USER --baid 1234567890 --from-date 01.01.2015 --output ba.csv --raw
+./dkbweb.py --userid USER --baid 1234 --from-date 01.01.2015 --output ba.csv --raw
 
 3. With dkbweb.py you can also directly submit your PIN to the command line:
 
