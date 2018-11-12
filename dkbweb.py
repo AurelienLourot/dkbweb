@@ -126,7 +126,10 @@ class DkbScraper(dkb.DkbScraper):
                 # Trying to match lines that look like
                 # DE01 2345 6789 0123 4567 89 / GirokontoDE01 2345 6789 0123 4567 89 / Girokonto
                 bapattern = r'\b[A-Z]{2}[\d\s]{20}%s\s%s\b' % (re.escape(baid[:2]), re.escape(baid[2:]))
+                print(label.text)
+                print(bapattern)
                 if re.search(bapattern, label.text, re.I):
+                    print(item.name)
                     form.value = [item.name]
                     return
 
@@ -148,6 +151,10 @@ class DkbScraper(dkb.DkbScraper):
 
         br.form = form = self._get_transaction_selection_form_ba()
         self._select_bank_account(form, baid)
+        # we need to reload so that we get the bank account form:
+        br.submit()
+
+        br.form = form = self._get_transaction_selection_form_ba()
         self._select_all_transactions_from_ba(form, from_date, to_date)
         br.submit()
 
